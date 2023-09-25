@@ -1,6 +1,7 @@
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 abstract class Room implements Comparable<Room>, Serializable {
@@ -15,7 +16,7 @@ abstract class Room implements Comparable<Room>, Serializable {
     protected int countBed;
     protected int Price;
     Map<LocalDate, Integer> ReservedInDays = new HashMap<>();
-    Map<LocalDate, String> mapOfHistory = new HashMap<>();
+    Map<String, LocalDate> mapOfHistory = new HashMap<>();
 
     Room() {
         id = IncrementId();
@@ -40,7 +41,7 @@ abstract class Room implements Comparable<Room>, Serializable {
         }
         if (canReserve) {
             ReservedInDays.put(dateCheckin, days);
-            mapOfHistory.put(dateCheckin, customer.getName());
+            mapOfHistory.put( customer.getName(),dateCheckin);
             System.out.println(ReservedInDays.size());
             return true;
         }
