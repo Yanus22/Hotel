@@ -1,140 +1,263 @@
-import java.io.*;
-import java.time.DateTimeException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Scanner;
 
-class Hotel implements Serializable {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    Scanner scanner = new Scanner(System.in);
-    Scanner scanner1 = new Scanner(System.in);
-    Map<String, Customer> mapCustomer;
-    List<Room> listRoom;
-    List<Long> IdForSingle = new ArrayList<>();
-    List<Long> IdForSDouble = new ArrayList<>();
-    List<Long> IdForDelyux = new ArrayList<>();
+public class Hotel {
+   private String pathCustomer = "/home/yanus/IdeaProjects/ExamJava/src/Coustumer";
+  private   String pathRoom = "/home/yanus/IdeaProjects/ExamJava/src/ListRoom";
+   private FileRead fileRaed = new FileRead();
+   private FileWrite fileWrite = new FileWrite();
+   private List<Room> roomList = fileRaed.ReadInRoom(pathRoom);
+   private Map<String, Customer> mapCustomer = fileRaed.readCustomerData(pathCustomer);
 
     Hotel() {
-        ReadFileList();
-        ReadFileCustomer();
-        if (mapCustomer.isEmpty()) {
-            System.out.println("costumer is empty");
-        }
-        System.out.println("Do you want to make a reservation?");
-        String answer = scanner.nextLine().replaceAll(" ", "");
-        if (answer.contains("yes")) {
-            HelloApplication();
-        }
-        System.out.println("Number of customers: " + mapCustomer.size());
+        Hello();
     }
 
 
-    private void HelloApplication() {
-        Customer customer = null;
-        String name;
-        String email;
-        while (true) {
-            System.out.println("Please enter your name:");
-            name = scanner.nextLine();
-            System.out.println("Please enter your email:");
-            email = scanner.nextLine();
-            if (mapCustomer.get(name) == null) {
-                System.out.println("need registartion try again");
-                continue;
+    private void Hello() {
+        Scanner scannerString = new Scanner(System.in);
+        System.out.println("If you want to Reserve a room, please enter 'Reserve'.");
+        System.out.println("If you want to Register, please enter 'Register'.");
+        String answer = scannerString.nextLine();
+
+        if (answer.contains("Reserve")) {
+            if (Reserve()) {
+                return;
+            }
+
+        } else if (answer.contains("Register")) {
+            if (Register()) {
+                Reserve();
+            }
+
+        } else {
+            System.out.println("Your answer is not correct. Please try again.");
+            Hello();
+        }
+    }
+
+    private boolean Register() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("please enter your name");
+        String name = scanner.nextLine();
+        if (mapCustomer.get(name) == null) {
+            System.out.println("please enter your email");
+            String email = scanner.nextLine();
+            Customer customer = new Customer(name, email);
+            mapCustomer.put(name, customer);
+            fileWrite.WriteInCoustumer(mapCustomer, pathCustomer);
+            System.out.println("registration is sucsesful");
+            return true;
+        }// aysinqn anunov mard chka
+        else {
+            System.out.println("thiis peopel already is register");
+            System.out.println("if you want register please enter yes"); //peopel is register and need register another name
+            System.out.println("if you want resereve please enter resereve");
+            String answer = scanner.nextLine();
+            if (answer.contains("yes")) {
+                Register();
+                return true;
+            } else if (answer.contains("reserve")) {
+                Reserve();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean Reserve() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("please enter your name");
+        String name = scanner.nextLine();
+        if (mapCustomer.get(name) != null) {//aysinqn et dzev mard ka { }
+            Scanner scannerInt = new Scanner(System.in);
+            System.out.println("we have 3 type which type do you want ");
+            System.out.println("first type is have    bethroom , bed for One peopel, and  price is +  20 $");
+            System.out.println("second type is have    bethroom , bed for two peopel, and  price is +  35 $");
+            System.out.println("third type is have    bethroom , bed for two peopel,mini bar and siting area and  price is +  55 $");
+            int answer = scannerInt.nextInt();
+            if (answer == 1) {
+                ReserveFirstType(name);
+                fileWrite.WritInRoom(roomList,pathRoom);
+                return true;
+            } else if (answer == 2) {
+                ReserveSecondType(name);
+                return true;
+            } else if (answer == 3) {
+                ReserveThirdType(name);
+                return true;
             } else {
-                customer = new Customer(name, email);
-                break;
+                System.out.println("ilegal type");
+                throw new RuntimeException();
             }
+        } else {
+            System.out.println("need registration for reserved");
+            Register();
+            Reserve();
         }
-        System.out.println("Which type of room do you want to reserve?");
-        System.out.println(new SingleRoom().toString() + " (Type 1)");
-        System.out.println(new DoubleRoom().toString() + " (Type 2)");
-        System.out.println(new DeLyux().toString() + " (Type 3)");
-        int answer = scanner.nextInt();
-        Reserve(answer, customer);
+        return false;
     }
 
-    private void Reserve(int answer, Customer customer) {
-        LocalDate date1 = LocalDate.now();
-        LocalDate date2 = LocalDate.now();
-        boolean isReserved = false;
-        int days = 0;
-        while (true) {
-            try {
-                System.out.println("When do you want to reserve (yyyy-MM-dd)?");
-                String dateString = scanner1.nextLine();
-                date2 = LocalDate.parse(dateString, formatter);
-                if (date2.isBefore(date1)) {
-                    System.out.println("invalud Date  ");
-                    throw new RuntimeException();
+    private void ReserveFirstType(String name) {
+        Scanner scannerString = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("in this id you can choce");
+        roomList.forEach(elem -> {
+            if (elem instanceof SingleRoom) {
+                System.out.print(elem.getId() + ",");
+            }
+        });
+        System.out.println("please enter id");
+        int answerId = scanner.nextInt();
+      label:roomList.forEach(elem -> {
+            if (elem.id == answerId) {
+                LocalDate datCheckin = ReservInDay();
+                System.out.println("print how days you want");
+                int days = scanner.nextInt();
+                while (days <=0) {
+                    System.out.println("is not valid days");
+                    System.out.println("please enter days");
+                    days = scanner.nextInt();
                 }
-                System.out.println("For how many days?");
-                days = scanner.nextInt();
-                int idAnswer = scanner.nextInt();
-
-                for (Room element : listRoom) {
-                    if ((answer == 1 && listRoom instanceof SingleRoom) ||
-                            (answer == 2 && listRoom instanceof DoubleRoom) ||
-                            (answer == 1 && listRoom instanceof SingleRoom)) {
-                        if (idAnswer == element.id) {
-                            if (element.ReserveRoom(date2, days, customer)) {
-                                System.out.println("room is reserved");
-                            }
-                        }
+                if(elem.ReserveRoom(datCheckin,days,mapCustomer.get(name))){
+                    System.out.println("Reserved is sucsesful");
+                    System.out.println("do you want   see your  information enter yes ");
+                    String answer = scannerString.nextLine();
+                    if(answer.contains("yes")) {
+                        PrintInfo(elem,name,days);
+                    }else {
+                        return;
                     }
-
+                }
+                else {
+                    System.out.println("this room is resereved in days who you want ");
+                   ReserveFirstType(name);
+                   return;
 
                 }
+            }
+        });
 
-                break; // Exit the loop if parsing is successful
-            } catch (DateTimeException e) {
-                System.out.println("Invalid date format. Please enter in yyyy-MM-dd format.");
-                // Clear the scanner buffer
-                scanner1.nextLine();
+    }
+
+    private void ReserveSecondType(String name) {
+        Scanner scannerString = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("in this id you can choce");
+        roomList.forEach(elem -> {
+            if (elem instanceof DoubleRoom) {
+                System.out.print(elem.getId() + ",");
+            }
+        });
+        System.out.println("please enter id");
+        int answerId = scanner.nextInt();
+        label:roomList.forEach(elem -> {
+            if (elem.id == answerId) {
+                LocalDate datCheckin = ReservInDay();
+                System.out.println("print how days you want");
+                int days = scanner.nextInt();
+                while (days <=0) {
+                    System.out.println("is not valid days");
+                    System.out.println("please enter days");
+                    days = scanner.nextInt();
+                }
+                if(elem.ReserveRoom(datCheckin,days,mapCustomer.get(name))){
+                    System.out.println("Reserved is sucsesful");
+                    System.out.println("do you want   see your  information enter yes ");
+                    String answer = scannerString.nextLine();
+                    if(answer.contains("yes")) {
+                        PrintInfo(elem,name,days);
+                    }else {
+                        return;
+                    }
+                }
+                else {
+                    System.out.println("this room is resereved in days who you want ");
+                    ReserveSecondType(name);
+                    return;
+
+                }
+            }
+        });
+
+    }
+
+    private void ReserveThirdType(String name) {
+        Scanner scannerString = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("in this id you can choce");
+        roomList.forEach(elem -> {
+            if (elem instanceof DeLyux) {
+                System.out.print(elem.getId() + ",");
+            }
+        });
+        System.out.println("please enter id");
+        int answerId = scanner.nextInt();
+        label:roomList.forEach(elem -> {
+            if (elem.id == answerId) {
+                LocalDate datCheckin = ReservInDay();
+                System.out.println("print how days you want");
+                int days = scanner.nextInt();
+                while (days <=0) {
+                    System.out.println("is not valid days");
+                    System.out.println("please enter days");
+                    days = scanner.nextInt();
+                }
+                if(elem.ReserveRoom(datCheckin,days,mapCustomer.get(name))){
+                    System.out.println("Reserved is sucsesful");
+                    System.out.println("do you want   see your  information enter yes ");
+                    String answer = scannerString.nextLine();
+                    if(answer.contains("yes")) {
+                        PrintInfo(elem,name,days);
+                    }else {
+                        return;
+                    }
+                }
+                else {
+                    System.out.println("this room is resereved in days who you want ");
+                    ReserveThirdType(name);
+                    return;
+
+                }
+            }
+        });
+
+    }
+
+    private LocalDate ReservInDay() {
+        LocalDate dateReserve = LocalDate.now();
+        boolean isValidTime = false;
+        while (isValidTime == false) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate dateNow = LocalDate.now();
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("please enter date in format yyyy-mm-dd");
+            String dateStr = scanner.nextLine();
+            try {
+                dateReserve = LocalDate.parse(dateStr, formatter);
+            } catch (Exception e) {
+                System.out.println("this  is not valid  date try again");
+                return  ReservInDay();
+            }
+            if (dateReserve.isBefore(dateNow)) {
+                System.out.println("is not valid date  try again");
+            } else {isValidTime = true;
+
             }
         }
-        mapCustomer.put(customer.getName(), customer);
-        WriteFileList();
-        WriteFileCustomer();
-
+        return dateReserve;
     }
-
-    public void ReadFileList() {
-        try (ObjectInputStream read = new ObjectInputStream(new FileInputStream("/home/yanus/IdeaProjects/ExamJava/RoomFile.txt"))) {
-            listRoom = (List<Room>) read.readObject();
-        } catch (IOException | ClassNotFoundException | ClassCastException e) {
-            // Handle exceptions
-            e.printStackTrace();
+    private void PrintInfo(Room elem,String name,int days) {
+        System.out.print("Dir " + name + " you are reserve in room for " +  elem.countBed + "peopel  is have bethroom,Tv,id is "  + elem.getId() + " " );
+        if(elem instanceof  DeLyux) {
+            System.out.print(",Siting area,Mini bare");
         }
-    }
-
-    public void ReadFileCustomer() {
-        try (ObjectInputStream read = new ObjectInputStream(new FileInputStream("/home/yanus/IdeaProjects/ExamJava/src/Costumer"))) {
-            mapCustomer = (Map<String, Customer>) read.readObject();
-            System.out.println(mapCustomer);
-        } catch (IOException | ClassNotFoundException | ClassCastException e) {
-            // Handle exceptions
-            e.printStackTrace();
-        }
-    }
-
-    private void WriteFileList() {
-        try (ObjectOutputStream write = new ObjectOutputStream(new FileOutputStream("/home/yanus/IdeaProjects/ExamJava/RoomFile.txt"))) {
-            write.writeObject(listRoom);
-            write.flush();
-        } catch (IOException e) {
-            // Handle exceptions
-            e.printStackTrace();
-        }
-    }
-
-    private void WriteFileCustomer() {
-        try (ObjectOutputStream write = new ObjectOutputStream(new FileOutputStream("/home/yanus/IdeaProjects/ExamJava/src/Costumer"))) {
-            write.writeObject(mapCustomer);
-        } catch (IOException e) {
-            // Handle exceptions
-            e.printStackTrace();
-        }
+        System.out.print("and her price is " + elem.Price);
+        System.out.println("you are resrev in " + days + " and all price is "  + days*elem.Price);
     }
 }
-
