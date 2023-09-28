@@ -5,9 +5,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 abstract class Room implements Comparable<Room>, Serializable {
-
-    private static long nextId = 1; // Shared among all Room objects
-    protected long id = 0; // Each Room object gets a unique id
+    protected long Id = 0; // Each Room object gets a unique id
+    private static long nextId = 1;
     protected boolean Tv = true;
     protected boolean closet = true;
     protected boolean bethRoom = true;
@@ -16,15 +15,18 @@ abstract class Room implements Comparable<Room>, Serializable {
     protected int countBed;
     protected int Price;
     Map<LocalDate, Integer> ReservedInDays = new HashMap<>();
-    Map<String, LocalDate> mapOfHistory = new HashMap<>();
+    Map<String, LocalDate> mapOfHistory = new HashMap<>();//name and chechkin time customer
 
     Room() {
-        id = IncrementId();
+
+        this.Id = nextId;
+        IncremetnId();
     }
 
     public boolean ReserveRoom(LocalDate dateCheckin, int days, Customer customer) {
-        if(ReservedInDays.isEmpty()) {
-            ReservedInDays.put(dateCheckin,days);
+        if (ReservedInDays.isEmpty()) {
+            ReservedInDays.put(dateCheckin, days);
+            return true;
         }
         boolean canReserve = false;
         LocalDate datCheckOut = dateCheckin.plusDays(days);
@@ -32,7 +34,7 @@ abstract class Room implements Comparable<Room>, Serializable {
             LocalDate tmpDateCheckin = entryes.getKey();
             Integer tmpDatReserve = entryes.getValue();
             LocalDate tmpDateCheckout = tmpDateCheckin.plusDays(tmpDatReserve);
-            if ((dateCheckin.isAfter(tmpDateCheckin)||dateCheckin.isEqual(tmpDateCheckin)) && dateCheckin.isBefore(tmpDateCheckout)) {
+            if ((dateCheckin.isAfter(tmpDateCheckin) || dateCheckin.isEqual(tmpDateCheckin)) && dateCheckin.isBefore(tmpDateCheckout)) {
                 return false;
             } else if (dateCheckin.isBefore(tmpDateCheckin) && ((datCheckOut.isEqual(tmpDateCheckin)) || datCheckOut.isAfter(tmpDateCheckin))) {
                 return false;
@@ -41,33 +43,73 @@ abstract class Room implements Comparable<Room>, Serializable {
         }
         if (canReserve) {
             ReservedInDays.put(dateCheckin, days);
-            mapOfHistory.put( customer.getName(),dateCheckin);
+            mapOfHistory.put(customer.getName(), dateCheckin);
             System.out.println(ReservedInDays.size());
             return true;
         }
-
         return false;
+    }
+
+    public boolean CanReserve(LocalDate dateCheckin, int days) {
+        if (ReservedInDays.isEmpty()) {
+            return true;
+        }
+        boolean canReserve = false;
+        LocalDate datCheckOut = dateCheckin.plusDays(days);
+        for (Map.Entry<LocalDate, Integer> entryes : ReservedInDays.entrySet()) {
+            LocalDate tmpDateCheckin = entryes.getKey();
+            Integer tmpDatReserve = entryes.getValue();
+            LocalDate tmpDateCheckout = tmpDateCheckin.plusDays(tmpDatReserve);
+            if ((dateCheckin.isAfter(tmpDateCheckin) || dateCheckin.isEqual(tmpDateCheckin)) && dateCheckin.isBefore(tmpDateCheckout)) {
+                return false;
+            } else if (dateCheckin.isBefore(tmpDateCheckin) && ((datCheckOut.isEqual(tmpDateCheckin)) || datCheckOut.isAfter(tmpDateCheckin))) {
+                return false;
+            }
+            canReserve = true;
+        }
+        return canReserve;
     }
 
 
     public long getId() {
-        return id;
+        return Id;
     }
+
+    public int getPrice() {
+        return Price;
+    }
+
+    public boolean isBethRoom() {
+        return bethRoom;
+    }
+
+    public boolean isCloset() {
+        return closet;
+    }
+
+    public boolean isHasBar() {
+        return hasBar;
+    }
+
+    public boolean isSitingArea() {
+        return sitingArea;
+    }
+
+    public boolean isTv() {
+        return Tv;
+    }
+
+    public int getCountBed() {
+        return countBed;
+    }
+
+    protected void IncremetnId() {
+        this.nextId++;
+    }
+
 
     @Override
     public int compareTo(Room room) {
         return Integer.compare(this.Price, room.Price);
     }
-
-    protected synchronized long IncrementId() {
-        return nextId++;
-    }
-
-    public static void main(String[] args) {
-        List<Room> listRoom = Arrays.asList(new SingleRoom(), new SingleRoom(), new SingleRoom(),
-                new SingleRoom(), new SingleRoom(), new DoubleRoom(), new DoubleRoom(), new DoubleRoom(), new DeLyux(), new DeLyux(), new DeLyux());
-        new FileWrite().WritInRoom(listRoom, "/home/yanus/IdeaProjects/ExamJava/src/ListRoom");
-    }
-
-
 }

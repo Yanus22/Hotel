@@ -19,8 +19,4 @@ public class Customer implements Serializable {
         return email;
     }
 
-    public static void main(String[] args) {
-        Map<String,Customer> map = new HashMap<>();
-        new FileWrite().WriteInCoustumer(map,"/home/yanus/IdeaProjects/ExamJava/src/Coustumer");
-    }
 }
