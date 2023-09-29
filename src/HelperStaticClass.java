@@ -1,11 +1,10 @@
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
-public class HelperStaticClass {
+public class HelperStaticClass { //methods  helper
 
     public static void PrintInfo(Room elem, String name, int days) {
         System.out.print("Dir " + name + " you are reserve in room for " + elem.countBed + "peopel  is have bethroom,Tv,id is " + elem.getId() + " ");
@@ -24,7 +23,7 @@ public class HelperStaticClass {
         String answerIdStr = scanner.nextLine().replaceAll(" ", "");
         while (!(answerIdStr.equals("1") || answerIdStr.equals("2") || answerIdStr.equals("3"))) {
             System.out.println("this is invalid Type  please enter again");
-            answerIdStr= scanner.nextLine();
+            answerIdStr = scanner.nextLine();
         }
         if (answerIdStr.equals("1")) {
             result = 1;
@@ -112,6 +111,52 @@ public class HelperStaticClass {
         } catch (IOException e) {
             System.err.println("Error creating file: " + e.getMessage());
         }
+    }
+
+    public static String RepoortFunction(Room room, String name) {
+        long idAnswer = room.getId();
+        LocalDate date = room.getMapOfHistory().get(name);
+        int day = room.getReservedInDays().get(date);
+
+        String report = " --------------- \n" +
+                " Reserved room id is  " + idAnswer + ", \n " +
+                "room reserve from  " + name + " ,\n" +
+                "room price is for one day is " + room.getPrice() + ",\n" +
+                "checkin " + date + ", checkout" + date.plusDays(day) + " ,\n" +
+                "price for room " + day * room.getPrice() + " , \n" +
+                "room charges and taxes is 20% " + day * room.getPrice() * 0.2 + " ,\n" +
+                "service fees 10% " + day * room.getPrice() * 0.1 + " \n" +
+                "all bill is " + day * room.getPrice() * 1.3;
+
+
+        File file = new File("src/report");
+        try {
+            FileWriter writer = new FileWriter(file);
+            writer.write(report);
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("it my problem");
+        }
+        return report;
+    }
+
+    public static String ReportReader() {
+        StringBuilder result = new StringBuilder();
+
+        try {
+            FileReader fileReader = new FileReader("src/report");
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                result.append(line);
+                result.append("\n");
+            }
+
+        } catch (IOException e) {
+            System.out.println(" not have report becaus you until now not reserve room");
+            return null;
+        }
+        return result.toString();
     }
 
 }

@@ -1,16 +1,18 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 
-public class Hotel { //4rd 5rd keterna mnum
+public class Hotel {
     private String pathCustomer = "src/Costumer";
     private String pathRoom = "src/RoomList";
     private FileRead fileRead = new FileRead();
     private FileWrite fileWrite = new FileWrite();
     private List<Room> roomList = new ArrayList<>();
-    private Map<String, Customer> mapCustomer;
+    private Map<String, Customer> mapCustomer;///
 
     Hotel() {
-
         // Check if customer data file exists, and create it if it doesn't
         if (!HelperStaticClass.fileExists(pathCustomer)) {
             HelperStaticClass.createFile(pathCustomer);
@@ -29,30 +31,53 @@ public class Hotel { //4rd 5rd keterna mnum
         } else {
             this.roomList = fileRead.ReadInRoom(pathRoom);
             this.mapCustomer = fileRead.readCustomerData(pathCustomer);
+            long maxId = -1;
+            for (Room elem : roomList) {
+                if (elem.getId() > maxId) {
+                    maxId = elem.getId();
+                }
+            }
+            maxId++;
+            Room.SetNextId(maxId);
         }
-        System.out.println(roomList);
         Hello();
     }
 
 
-    private void Hello() {
+    private void Hello() {//start
         boolean exitAplication = false;
         while (exitAplication == false) {
+            String reoport = "";
             InformatIonAplication();
             Scanner scanner = new Scanner(System.in);
             String answer = scanner.nextLine().replaceAll(" ", "");
-            if (answer.equals("1")) {
+            if (answer.equals("1")) {//add room in hotel
                 Room room = CreatRoom();
                 AddRoom(room);
-            } else if (answer.equals("2")) {
+            } else if (answer.equals("2")) {//add coustumer
                 Register();
-            } else if (answer.equals("3")) {
+            } else if (answer.equals("3")) {//reserve room
                 Reserve();
+            } else if (answer.equals("4")) {//save information in txt
+                fileWrite.WritInRoom(roomList, pathRoom);
+                fileWrite.WriteInCoustumer(mapCustomer, pathCustomer);
+            } else if (answer.equals("5")) {//show   last rsereve  information
+                if (HelperStaticClass.ReportReader() != null) {
+                    System.out.println(HelperStaticClass.ReportReader());
+                }
+            } else if (answer.equals("6")) {//show hotel infromation
+                HotelInfo();
+            }
+            else if(answer.equals("0")){//exit
+                exitAplication = true;
+            }
+            else {
+                System.out.println("please choice number of [0-6]");
             }
         }
     }
 
-    private boolean Register() {
+    private boolean Register() { //add coustumer
         Scanner scanner = new Scanner(System.in);
         System.out.println("please enter your name");
         String name = scanner.nextLine().replaceAll(" ", "");
@@ -60,12 +85,11 @@ public class Hotel { //4rd 5rd keterna mnum
             System.out.println("this is not valid name ");
             name = scanner.nextLine();
         }
-        if (mapCustomer.get(name) == null) {
+        if (mapCustomer.get(name) == null) {// no costumer in map -> can register
             System.out.println("please enter your email");
             String email = scanner.nextLine();
             Customer customer = new Customer(name, email);
             mapCustomer.put(name, customer);
-            fileWrite.WriteInCoustumer(mapCustomer, pathCustomer);
             System.out.println("registration is sucsesful");
             return true;
         }//else Peopel is will be Register
@@ -73,25 +97,23 @@ public class Hotel { //4rd 5rd keterna mnum
         return false;
     }
 
-    private boolean Reserve() {
+    private boolean Reserve() {//reserve rrom
         Scanner scanner = new Scanner(System.in);
         System.out.println("please enter your name");
         String name = scanner.nextLine();
-        if (mapCustomer.get(name) != null) {//aysinqn et dzev mard ka { }
-            Scanner scannerInt = new Scanner(System.in);
+        if (mapCustomer.get(name) != null) {//costumer is register -> can reserve { }
             System.out.println("we have 3 type which type do you want ");
             System.out.println("first type is have    bethroom , bed for One peopel, and  price is +  20 $");
             System.out.println("second type is have    bethroom , bed for two peopel, and  price is +  35 $");
             System.out.println("third type is have    bethroom , bed for two peopel,mini bar and siting area and  price is +  55 $");
             int answer = HelperStaticClass.TypeGenerator();
-            if (answer == 1) {
+            if (answer == 1) {//single room
                 ReserveFirstType(name);
-                fileWrite.WritInRoom(roomList, pathRoom);
                 return true;
-            } else if (answer == 2) {
+            } else if (answer == 2) {//double room
                 ReserveSecondType(name);
                 return true;
-            } else if (answer == 3) {
+            } else if (answer == 3) {//delyux room
                 ReserveThirdType(name);
                 return true;
             }
@@ -106,7 +128,7 @@ public class Hotel { //4rd 5rd keterna mnum
         LocalDate date = HelperStaticClass.DateGenerator();
         int day = HelperStaticClass.DayGenerator();
         for (Room elem : roomList) {
-            if (elem.CanReserve(date, day) && (elem instanceof SingleRoom)) {
+            if (elem.CanReserve(date, day) && (elem instanceof SingleRoom)) {//filter room which can reserve in that time
                 canReservWithDay.add(elem.getId());
             }
         }
@@ -126,7 +148,8 @@ public class Hotel { //4rd 5rd keterna mnum
             if (elem.getId() == idAnswer) {
                 Customer customer = mapCustomer.get(name);
                 elem.ReserveRoom(date, day, customer);
-                System.out.println("room is reserved sucsesful");
+                String report = HelperStaticClass.RepoortFunction(elem, name);
+                System.out.println(report);
                 return;
             }
         }
@@ -137,7 +160,7 @@ public class Hotel { //4rd 5rd keterna mnum
         LocalDate date = HelperStaticClass.DateGenerator();
         int day = HelperStaticClass.DayGenerator();
         for (Room elem : roomList) {
-            if (elem.CanReserve(date, day) && (elem instanceof DoubleRoom )) {
+            if (elem.CanReserve(date, day) && (elem instanceof DoubleRoom)) {
                 canReservWithDay.add(elem.getId());
             }
         }
@@ -157,7 +180,8 @@ public class Hotel { //4rd 5rd keterna mnum
             if (elem.getId() == idAnswer) {
                 Customer customer = mapCustomer.get(name);
                 elem.ReserveRoom(date, day, customer);
-                System.out.println("room is reserved sucsesful");
+                String report = HelperStaticClass.RepoortFunction(elem, name);
+                System.out.println(report);
                 return;
             }
         }
@@ -188,7 +212,8 @@ public class Hotel { //4rd 5rd keterna mnum
             if (elem.getId() == idAnswer) {
                 Customer customer = mapCustomer.get(name);
                 elem.ReserveRoom(date, day, customer);
-                System.out.println("room is reserved sucsesful");
+                String report = HelperStaticClass.RepoortFunction(elem, name);
+                System.out.println(report);
                 return;
             }
         }
@@ -202,7 +227,6 @@ public class Hotel { //4rd 5rd keterna mnum
             return false;
         } else {
             roomList.add(room);
-            fileWrite.WritInRoom(roomList, pathRoom);
         }
         return true;
     }
@@ -238,6 +262,34 @@ public class Hotel { //4rd 5rd keterna mnum
         } else {
             System.out.println("invalid type");
             return CreatRoom();
+        }
+    }
+
+    private void HotelInfo() {
+        int countSinglRoom = 0;
+        int countDoubleRoom = 0;
+        int countDelyuxRoom = 0;
+        for (int i = 0; i < roomList.size(); i++) {
+            if (roomList.get(i) instanceof SingleRoom) {
+                countSinglRoom++;
+            } else if (roomList.get(i) instanceof DoubleRoom) {
+                countDoubleRoom++;
+            } else if (roomList.get(i) instanceof DeLyux) {
+                countDelyuxRoom++;
+            }
+        }
+        System.out.println("hello in our hotel , now show you information about rooms ");
+        if (countSinglRoom != 0) {
+            System.out.print("we have " + countSinglRoom + " singleRoom");
+            System.out.println("and price is this room  20");
+        }
+        if (countSinglRoom != 0) {
+            System.out.print("we have" + countDoubleRoom + " doubleRoom");
+            System.out.println("and price is this room  35");
+        }
+        if (countDelyuxRoom != 0) {
+            System.out.print("we have" + countDelyuxRoom + " DelyuxRoom");
+            System.out.println("and price is this room  55");
         }
     }
 }

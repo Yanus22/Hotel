@@ -14,8 +14,8 @@ abstract class Room implements Comparable<Room>, Serializable {
     protected boolean sitingArea = false;
     protected int countBed;
     protected int Price;
-    Map<LocalDate, Integer> ReservedInDays = new HashMap<>();
-    Map<String, LocalDate> mapOfHistory = new HashMap<>();//name and chechkin time customer
+    protected Map<LocalDate, Integer> ReservedInDays = new HashMap<>();
+    protected Map<String, LocalDate> mapOfHistory = new HashMap<>();//name and chechkin time customer
 
     Room() {
 
@@ -25,6 +25,7 @@ abstract class Room implements Comparable<Room>, Serializable {
 
     public boolean ReserveRoom(LocalDate dateCheckin, int days, Customer customer) {
         if (ReservedInDays.isEmpty()) {
+            mapOfHistory.put(customer.getName(),dateCheckin);
             ReservedInDays.put(dateCheckin, days);
             return true;
         }
@@ -103,8 +104,19 @@ abstract class Room implements Comparable<Room>, Serializable {
         return countBed;
     }
 
+    public Map<LocalDate, Integer> getReservedInDays() {
+        return ReservedInDays;
+    }
+
+    public Map<String, LocalDate> getMapOfHistory() {
+        return mapOfHistory;
+    }
+
     protected void IncremetnId() {
         this.nextId++;
+    }
+    public static void SetNextId(long idNext){
+        nextId = idNext;
     }
 
 
